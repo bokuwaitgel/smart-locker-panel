@@ -182,19 +182,22 @@ export default function DashboardPage() {
             </div>
           </a>
 
-          <div className="relative block w-full bg-white rounded-lg p-6 shadow">
+          <a
+            href="/dashboard/orders"
+            className="relative block w-full bg-white rounded-lg p-6 shadow hover:shadow-md transition-shadow"
+          >
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold">📊</span>
+                  <span className="text-white font-bold">�</span>
                 </div>
               </div>
               <div className="ml-4">
-                <h3 className="text-lg font-medium text-gray-900">Reports</h3>
-                <p className="text-sm text-gray-500">View detailed analytics</p>
+                <h3 className="text-lg font-medium text-gray-900">Delivery Orders</h3>
+                <p className="text-sm text-gray-500">Manage orders and pickup codes</p>
               </div>
             </div>
-          </div>
+          </a>
         </div>
       </div>
     </div>

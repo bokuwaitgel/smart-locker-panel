@@ -2,7 +2,8 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
@@ -11,14 +12,13 @@ export default function DashboardLayout({
 }) {
   const { user, logout, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [path, setPath] = useState<string>('');
+  const pathname = usePathname();
   //check /dashboard, /dashboard/containers, /dashboard/lockers
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
-    setPath(window.location.pathname);
     
   }, [isAuthenticated, isLoading, router]);
 
@@ -70,7 +70,7 @@ export default function DashboardLayout({
             <a
               href="/dashboard"
               className={`border-b-2 py-4 px-1 text-sm font-medium ${
-                path === '/dashboard'
+                pathname === '/dashboard'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
@@ -80,22 +80,32 @@ export default function DashboardLayout({
             <a
               href="/dashboard/containers"
               className={`border-b-2 py-4 px-1 text-sm font-medium ${
-                path === '/dashboard/containers'
+                pathname === '/dashboard/containers'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Containers
             </a>
-            <a
+             <a
               href="/dashboard/lockers"
               className={`border-b-2 py-4 px-1 text-sm font-medium ${
-                path === '/dashboard/lockers'
+                pathname === '/dashboard/lockers'
                   ? 'border-blue-500 text-blue-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
               Lockers
+            </a>
+                        <a
+              href="/dashboard/orders"
+              className={`border-b-2 py-4 px-1 text-sm font-medium ${
+                pathname === '/dashboard/orders'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Orders
             </a>
           </div>
         </div>
