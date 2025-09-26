@@ -23,6 +23,8 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [boardId, setBoardId] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -32,8 +34,16 @@ export default function OrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await api.get('/deliveries');
-      setOrders(response.data);
+      const params = new URLSearchParams();
+      if (boardId) params.append('boardId', boardId);
+      if (statusFilter) params.append('status', statusFilter);
+      
+      const queryString = params.toString();
+      const url = queryString ? `delivery/deliveries?${queryString}` : 'delivery/deliveries';
+
+      const response = await api.get(url);
+      console.log('Fetched orders:', response.data);
+      setOrders(response.data.data);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     } finally {
@@ -41,14 +51,25 @@ export default function OrdersPage() {
     }
   };
 
-  const updateStatus = async (id: number, status: string) => {
-    try {
-      await api.put(`/deliveries/${id}/status`, { status });
-      fetchOrders();
-    } catch (error) {
-      console.error('Failed to update status:', error);
-    }
+  const handleFilterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchOrders();
   };
+
+  const clearFilters = () => {
+    setBoardId('');
+    setStatusFilter('');
+    fetchOrders();
+  };
+
+  // const updateStatus = async (id: number, status: string) => {
+  //   try {
+  //     await api.put(`/deliveries/${id}/status`, { status });
+  //     fetchOrders();
+  //   } catch (error) {
+  //     console.error('Failed to update status:', error);
+  //   }
+  // };
 
   const filteredOrders = selectedStatus
     ? orders.filter(order => order.status === selectedStatus)
@@ -65,26 +86,60 @@ export default function OrdersPage() {
     <div className="px-4 py-6 sm:px-0">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Delivery Orders</h1>
-        <p className="mt-1 text-sm text-gray-600">
+        <p className="mt-1 text-sm text-black">
           Manage delivery orders and pickup codes
         </p>
       </div>
 
-      {/* Filter */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Filter by Status
-        </label>
-        <select
-          value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
-          className="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">All Orders</option>
-          {uniqueStatuses.map(status => (
-            <option key={status} value={status}>{status}</option>
-          ))}
-        </select>
+      {/* Filter Form */}
+      <div className="bg-white p-6 rounded-lg shadow mb-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">Get Deliveries</h2>
+        <form onSubmit={handleFilterSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Board ID
+            </label>
+            <input
+              type="text"
+              value={boardId}
+              onChange={(e) => setBoardId(e.target.value)}
+              placeholder="Enter board ID"
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black mb-1">
+              Status
+            </label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Statuses</option>
+              <option value="WAITING">Waiting</option>
+              <option value="PENDING">Pending</option>
+              <option value="DELIVERED">Delivered</option>
+              <option value="PICKED_UP">Picked Up</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+          <div className="flex items-end space-x-2">
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Get Deliveries
+            </button>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Stats */}
@@ -93,31 +148,31 @@ export default function OrdersPage() {
           <div className="text-2xl font-bold text-gray-900">
             {filteredOrders.length}
           </div>
-          <div className="text-sm text-gray-500">Total Orders</div>
+          <div className="text-sm text-black">Total Orders</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="text-2xl font-bold text-yellow-600">
             {filteredOrders.filter(o => o.status === 'WAITING').length}
           </div>
-          <div className="text-sm text-gray-500">Waiting</div>
+          <div className="text-sm text-black">Waiting</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="text-2xl font-bold text-blue-600">
             {filteredOrders.filter(o => o.status === 'PENDING').length}
           </div>
-          <div className="text-sm text-gray-500">Pending</div>
+          <div className="text-sm text-black">Pending</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="text-2xl font-bold text-green-600">
             {filteredOrders.filter(o => o.status === 'DELIVERED').length}
           </div>
-          <div className="text-sm text-gray-500">Delivered</div>
+          <div className="text-sm text-black">Delivered</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow">
           <div className="text-2xl font-bold text-purple-600">
             {filteredOrders.filter(o => o.status === 'PICKED_UP').length}
           </div>
-          <div className="text-sm text-gray-500">Picked Up</div>
+          <div className="text-sm text-black">Picked Up</div>
         </div>
       </div>
 
@@ -133,16 +188,16 @@ export default function OrdersPage() {
                       <h3 className="text-sm font-medium text-gray-900">
                         Order #{order.id}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-black">
                         Container: {order.boardId} | Locker: {order.lockerId}
                       </p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-black">
                         Mobile: {order.pickupMobile}
                       </p>
                       <p className="text-sm font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded">
                         Code: {order.pickupCode}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-black">
                         Created: {new Date(order.createdAt).toLocaleString()}
                       </p>
                     </div>
@@ -165,7 +220,7 @@ export default function OrdersPage() {
                     >
                       {order.status}
                     </span>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-black mt-1">
                       Payment: {order.paymentStatus}
                     </p>
                     {order.isSendSMS && (
@@ -174,8 +229,8 @@ export default function OrdersPage() {
                   </div>
                   <select
                     value={order.status}
-                    onChange={(e) => updateStatus(order.id, e.target.value)}
-                    className="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    // onChange={(e) => updateStatus(order.id, e.target.value)}
+                    className="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black border-2"
                   >
                     {statusOptions.map(status => (
                       <option key={status} value={status}>{status}</option>
