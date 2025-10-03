@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
+import { isAxiosError } from 'axios';
 
 interface Locker {
   id: number;
@@ -17,6 +18,11 @@ export default function LockersPage() {
   const [lockers, setLockers] = useState<Locker[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBoardId, setSelectedBoardId] = useState('');
+  const [actionLockerId, setActionLockerId] = useState<number | null>(null);
+  const [actionMessage, setActionMessage] = useState<
+    | { type: 'success' | 'error'; text: string }
+    | null
+  >(null);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -28,6 +34,7 @@ export default function LockersPage() {
       const response = await api.get('/lockers');
       
       setLockers(response.data.data);
+      setActionMessage(null);
     } catch (error) {
       console.error('Failed to fetch lockers:', error);
     } finally {
@@ -41,6 +48,42 @@ export default function LockersPage() {
       fetchLockers();
     } catch (error) {
       console.error('Failed to update status:', error);
+    }
+  };
+
+  const handleOpenLocker = async (locker: Locker) => {
+    setActionLockerId(locker.id);
+    setActionMessage(null);
+    try {
+      const response = await api.post('/lockers/open', {
+        lockerNumber: locker.lockerNumber,
+        boardId: locker.boardId,
+      });
+
+      setActionMessage({
+        type: 'success',
+        text:
+          response.data?.message ||
+          `Locker ${locker.lockerNumber} open request sent successfully.`,
+      });
+    } catch (error) {
+      console.error('Failed to open locker:', error);
+      let message = 'Failed to open locker. Please try again.';
+
+      if (isAxiosError(error)) {
+        const responseMessage = (error.response?.data as {
+          message?: string;
+        })?.message;
+        if (responseMessage) {
+          message = responseMessage;
+        }
+      } else if (error instanceof Error && error.message) {
+        message = error.message;
+      }
+
+      setActionMessage({ type: 'error', text: message });
+    } finally {
+      setActionLockerId(null);
     }
   };
 
@@ -79,6 +122,18 @@ export default function LockersPage() {
           ))}
         </select>
       </div>
+
+      {actionMessage && (
+        <div
+          className={`mb-6 rounded-md border p-4 text-sm ${
+            actionMessage.type === 'success'
+              ? 'border-green-200 bg-green-50 text-green-700'
+              : 'border-red-200 bg-red-50 text-red-700'
+          }`}
+        >
+          {actionMessage.text}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4 mb-6">
@@ -141,7 +196,7 @@ export default function LockersPage() {
               </p>
             )}
 
-            <div className="flex space-x-2">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
               <select
                 value={locker.status}
                 onChange={(e) => updateStatus(locker.id, e.target.value)}
@@ -152,6 +207,17 @@ export default function LockersPage() {
                 <option value="MAINTENANCE">Maintenance</option>
                 <option value="PENDING">Pending</option>
               </select>
+              <button
+                onClick={() => handleOpenLocker(locker)}
+                disabled={actionLockerId === locker.id}
+                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  actionLockerId === locker.id
+                    ? 'cursor-not-allowed bg-blue-300'
+                    : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
+                }`}
+              >
+                {actionLockerId === locker.id ? 'Opening...' : 'Open Locker'}
+              </button>
             </div>
           </div>
         ))}
