@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
+import { Package, MapPin, Plus, RefreshCw, X, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 interface Container {
     id: number;
@@ -61,70 +62,89 @@ export default function ContainersPage() {
     };
 
     if (loading) {
-        return <div className="text-center py-8">Loading containers...</div>;
+        return (
+            <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading containers...</p>
+                </div>
+            </div>
+        );
     }
 
+    const getStatusIcon = (status: string) => {
+        switch (status) {
+            case 'ACTIVE':
+                return <CheckCircle size={16} className="text-green-600" />;
+            case 'INACTIVE':
+                return <XCircle size={16} className="text-red-600" />;
+            case 'MAINTENANCE':
+                return <AlertCircle size={16} className="text-yellow-600" />;
+            default:
+                return null;
+        }
+    };
+
     return (
-        <div className="px-4 py-6 sm:px-0">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Container Management</h1>
-                    <p className="mt-1 text-sm text-gray-600">
-                        Manage your smart locker containers
-                    </p>
-                </div>
-                <div className="flex space-x-2">
+        <div>
+            <div className="flex justify-between items-center mb-6">
+                <div className="flex space-x-3">
                     <button
                         onClick={fetchContainers}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                        className="flex items-center space-x-2 bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg shadow-sm border border-gray-200 transition-colors"
                     >
-                        Check Containers
+                        <RefreshCw size={18} />
+                        <span>Refresh</span>
                     </button>
                     <button
                         onClick={() => setShowForm(!showForm)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                        className="flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-4 py-2 rounded-lg shadow-md transition-all"
                     >
-                        {showForm ? 'Cancel' : 'Add Container'}
+                        {showForm ? <X size={18} /> : <Plus size={18} />}
+                        <span>{showForm ? 'Cancel' : 'Add Container'}</span>
                     </button>
                 </div>
             </div>
 
             {showForm && (
-                <div className="bg-white shadow rounded-lg p-6 mb-6">
-                    <h2 className="text-lg font-medium text-gray-900 mb-4">Add New Container</h2>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="bg-white shadow-lg rounded-xl p-6 mb-6 border border-gray-100">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Add New Container</h2>
+                    <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Board ID</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Board ID</label>
                             <input
                                 type="text"
                                 required
                                 value={formData.boardId}
                                 onChange={(e) => setFormData({ ...formData, boardId: e.target.value })}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all"
+                                placeholder="Enter board ID"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Location</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                             <input
                                 type="text"
                                 required
                                 value={formData.location}
                                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all"
+                                placeholder="Enter location"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700">Description</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                             <textarea
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-black"
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all"
                                 rows={3}
+                                placeholder="Enter description (optional)"
                             />
                         </div>
                         <button
                             type="submit"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-medium shadow-md transition-all"
                         >
                             Create Container
                         </button>
@@ -132,51 +152,81 @@ export default function ContainersPage() {
                 </div>
             )}
 
-            <div className="bg-white shadow overflow-hidden sm:rounded-md">
-                <ul className="divide-y divide-gray-200">
-                    {containers.map((container) => (
-                        <li key={container.id} className="px-6 py-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                    <div className="flex items-center">
-                                        <div className="flex-1">
-                                            <h3 className="text-sm font-medium text-gray-900">
-                                                {container.boardId}
-                                            </h3>
-                                            <p className="text-sm text-gray-500">{container.location}</p>
-                                            {container.description && (
-                                                <p className="text-sm text-gray-400">{container.description}</p>
-                                            )}
-                                        </div>
-                                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {containers.map((container) => (
+                    <div key={container.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+                        <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-4">
+                            <div className="flex items-center space-x-3">
+                                <div className="p-2 bg-white/20 rounded-lg">
+                                    <Package size={24} className="text-white" />
                                 </div>
-                                <div className="flex items-center space-x-4">
-                                    <span
-                                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                            container.status === 'ACTIVE'
-                                                ? 'bg-green-100 text-green-800'
-                                                : container.status === 'INACTIVE'
-                                                ? 'bg-red-100 text-red-800'
-                                                : 'bg-yellow-100 text-yellow-800'
-                                        }`}
-                                    >
-                                        {container.status}
-                                    </span>
-                                    <select
-                                        value={container.status}
-                                        onChange={(e) => updateStatus(container.id, e.target.value)}
-                                        className="text-sm border-gray-300 text-black rounded-md focus:ring-blue-500 focus:border-blue-500 border-radius-md border-1"
-                                    >
-                                        <option value="ACTIVE">Active</option>
-                                        <option value="INACTIVE">Inactive</option>
-                                        <option value="MAINTENANCE">Maintenance</option>
-                                    </select>
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-white">
+                                        {container.boardId}
+                                    </h3>
                                 </div>
                             </div>
-                        </li>
-                    ))}
-                </ul>
+                        </div>
+                        
+                        <div className="p-5 space-y-4">
+                            <div className="flex items-start space-x-2">
+                                <MapPin size={18} className="text-gray-400 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-medium text-gray-900">{container.location}</p>
+                                    {container.description && (
+                                        <p className="text-sm text-gray-500 mt-1">{container.description}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-gray-700">Status</span>
+                                    <div className="flex items-center space-x-2">
+                                        {getStatusIcon(container.status)}
+                                        <span
+                                            className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
+                                                container.status === 'ACTIVE'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : container.status === 'INACTIVE'
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                            }`}
+                                        >
+                                            {container.status}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <select
+                                    value={container.status}
+                                    onChange={(e) => updateStatus(container.id, e.target.value)}
+                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all"
+                                >
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="INACTIVE">Inactive</option>
+                                    <option value="MAINTENANCE">Maintenance</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
+
+            {containers.length === 0 && (
+                <div className="text-center py-12 bg-white rounded-xl shadow-md">
+                    <Package size={48} className="mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No containers found</h3>
+                    <p className="text-gray-600 mb-4">Get started by adding your first container</p>
+                    <button
+                        onClick={() => setShowForm(true)}
+                        className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-medium shadow-md transition-all"
+                    >
+                        <Plus size={18} />
+                        <span>Add Container</span>
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
