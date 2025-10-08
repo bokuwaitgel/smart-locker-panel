@@ -24,13 +24,31 @@ export default function DashboardLayout({
   const { user, logout, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  // Handle responsive sidebar
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (isLoading) {
     return (
@@ -57,49 +75,61 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Mobile Backdrop */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 bg-white shadow-xl transition-all duration-300 ${
-          sidebarOpen ? 'w-64' : 'w-20'
+          isMobile 
+            ? sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'
+            : sidebarOpen ? 'w-64' : 'w-20'
         }`}
       >
         {/* Logo & Toggle */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
           {sidebarOpen && (
-            <h1 className="text-lg font-bold text-white truncate">
+            <h1 className="text-base sm:text-lg font-bold text-white truncate">
               24/7 Delivery Box
             </h1>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-white/20 text-white transition-colors"
+            className="p-2 rounded-lg hover:bg-white/20 text-white transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
           >
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="mt-6 px-3 space-y-1">
+        <nav className="mt-6 px-3 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
           {navigation.map((item) => {
             const Icon = item.icon;
             return (
               <a
                 key={item.name}
                 href={item.href}
-                className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group ${
+                onClick={() => isMobile && setSidebarOpen(false)}
+                className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group min-h-[48px] ${
                   item.current
                     ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
                 }`}
               >
                 <Icon
-                  size={20}
+                  size={22}
                   className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} ${
                     item.current ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'
                   }`}
                 />
                 {sidebarOpen && (
-                  <span className="font-medium">{item.name}</span>
+                  <span className="font-medium text-sm sm:text-base">{item.name}</span>
                 )}
               </a>
             );
@@ -133,20 +163,34 @@ export default function DashboardLayout({
       {/* Main Content */}
       <main
         className={`transition-all duration-300 ${
-          sidebarOpen ? 'ml-64' : 'ml-20'
+          isMobile ? 'ml-0' : sidebarOpen ? 'ml-64' : 'ml-20'
         }`}
       >
         {/* Top Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-          <div className="px-6 py-4">
-            <h2 className="text-2xl font-bold text-gray-900">
+        <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+            {/* Mobile Menu Button */}
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="p-2 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors lg:hidden min-w-[40px] min-h-[40px] flex items-center justify-center"
+                aria-label="Open menu"
+              >
+                <Menu size={24} />
+              </button>
+            )}
+            
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
               {navigation.find(item => item.current)?.name || 'Dashboard'}
             </h2>
+            
+            {/* Spacer for mobile */}
+            {isMobile && <div className="w-10"></div>}
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {children}
         </div>
       </main>

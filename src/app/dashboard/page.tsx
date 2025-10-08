@@ -126,38 +126,38 @@ export default function DashboardPage() {
   return (
     <div>
       {/* Welcome Section */}
-      <div className="mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white shadow-xl">
+      <div className="mb-6 sm:mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white shadow-xl">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Welcome Back!</h1>
-            <p className="text-blue-100">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome Back!</h1>
+            <p className="text-sm sm:text-base text-blue-100">
               Here's what's happening with your smart locker system today.
             </p>
           </div>
-          <TrendingUp size={48} className="text-blue-200 opacity-50" />
+          <TrendingUp size={36} className="text-blue-200 opacity-50 hidden sm:block sm:w-12 sm:h-12" />
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
         {statsCards.map((card, index) => {
           const Icon = card.icon;
           return (
             <div
               key={index}
-              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group"
+              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group touch-manipulation"
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${card.bgColor}`}>
-                    <Icon size={24} className={card.iconColor} />
+              <div className="p-5 sm:p-6">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className={`p-2.5 sm:p-3 rounded-lg ${card.bgColor}`}>
+                    <Icon size={20} className={`sm:w-6 sm:h-6 ${card.iconColor}`} />
                   </div>
                   <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${card.gradient} animate-pulse`}></div>
                 </div>
-                <h3 className="text-sm font-medium text-gray-600 mb-1">
+                <h3 className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
                   {card.title}
                 </h3>
-                <p className="text-3xl font-bold text-gray-900">
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
                   {card.value}
                 </p>
               </div>
@@ -168,18 +168,18 @@ export default function DashboardPage() {
       </div>
 
       {/* Occupancy Rate Card */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+      <div className="bg-white rounded-xl shadow-md p-5 sm:p-6 mb-6 sm:mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Locker Occupancy Rate</h3>
-          <Activity className="text-gray-400" size={20} />
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Locker Occupancy Rate</h3>
+          <Activity className="text-gray-400" size={18} />
         </div>
-        <div className="flex items-end space-x-4">
-          <div className="text-4xl font-bold text-gray-900">{occupancyRate}%</div>
-          <div className="text-sm text-gray-600 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-end space-y-2 sm:space-y-0 sm:space-x-4">
+          <div className="text-3xl sm:text-4xl font-bold text-gray-900">{occupancyRate}%</div>
+          <div className="text-xs sm:text-sm text-gray-600 sm:pb-2">
             {stats?.occupiedLockers} of {stats?.totalLockers} lockers occupied
           </div>
         </div>
-        <div className="mt-4 bg-gray-200 rounded-full h-3 overflow-hidden">
+        <div className="mt-4 bg-gray-200 rounded-full h-2.5 sm:h-3 overflow-hidden">
           <div
             className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-500"
             style={{ width: `${occupancyRate}%` }}
@@ -189,24 +189,24 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
             return (
               <a
                 key={index}
                 href={action.href}
-                className="group relative bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+                className="group relative bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden touch-manipulation active:scale-95"
               >
-                <div className="p-6">
-                  <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${action.gradient} mb-4`}>
-                    <Icon size={24} className="text-white" />
+                <div className="p-5 sm:p-6">
+                  <div className={`inline-flex p-2.5 sm:p-3 rounded-lg bg-gradient-to-r ${action.gradient} mb-3 sm:mb-4`}>
+                    <Icon size={20} className="text-white sm:w-6 sm:h-6" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
                     {action.title}
                   </h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-gray-600 mb-3 sm:mb-4">
                     {action.description}
                   </p>
                   <div className="flex items-center text-blue-600 font-medium text-sm">
