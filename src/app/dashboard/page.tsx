@@ -26,24 +26,24 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      try {
         const [containerRes, lockerRes] = await Promise.all([
-            api.get('/containers/stats'),
-            api.get('/lockers/stats'),
+          api.get('/containers/stats'),
+          api.get('/lockers/stats'),
         ]);
 
-        console.log(containerRes.data);
-        console.log(lockerRes.data);    
-
-        const fetchedData = {
-            totalContainers: containerRes.data.totalContainers || 0,
-            activeContainers: containerRes.data.activeContainers || 0,
-            totalLockers: lockerRes.data.totalLockers || 0,
-            availableLockers: lockerRes.data.availableLockers || 0,
-            occupiedLockers: lockerRes.data.occupiedLockers || 0,
-        }
-
-        setStats(fetchedData);
-        if (loading) setLoading(false);
+        setStats({
+          totalContainers: containerRes.data.totalContainers || 0,
+          activeContainers: containerRes.data.activeContainers || 0,
+          totalLockers: lockerRes.data.totalLockers || 0,
+          availableLockers: lockerRes.data.availableLockers || 0,
+          occupiedLockers: lockerRes.data.occupiedLockers || 0,
+        });
+      } catch (error) {
+        setStats({ totalContainers: 0, activeContainers: 0, totalLockers: 0, availableLockers: 0, occupiedLockers: 0 });
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchStats();

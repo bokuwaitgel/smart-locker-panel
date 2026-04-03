@@ -43,7 +43,6 @@ export default function OrdersPage() {
       const url = queryString ? `delivery/deliveries?${queryString}` : 'delivery/deliveries';
 
       const response = await api.get(url);
-      console.log('Fetched orders:', response.data);
       setOrders(response.data.data);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
@@ -62,15 +61,6 @@ export default function OrdersPage() {
     setStatusFilter('');
     fetchOrders();
   };
-
-  // const updateStatus = async (id: number, status: string) => {
-  //   try {
-  //     await api.put(`/deliveries/${id}/status`, { status });
-  //     fetchOrders();
-  //   } catch (error) {
-  //     console.error('Failed to update status:', error);
-  //   }
-  // };
 
   const filteredOrders = selectedStatus
     ? orders.filter(order => order.status === selectedStatus)
@@ -270,15 +260,6 @@ export default function OrdersPage() {
                     </div>
                   )}
 
-                  <select
-                    value={order.status}
-                    // onChange={(e) => updateStatus(order.id, e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all"
-                  >
-                    {statusOptions.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
-                  </select>
                 </div>
               </div>
             </div>

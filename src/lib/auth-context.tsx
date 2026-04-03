@@ -29,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = Cookies.get('token');
-    console.log(token);
     if (token) {
       try {
         const decoded = jwtDecode<User>(token);
@@ -50,11 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (token: string) => {
-    localStorage.setItem('token', token);
     const decoded = jwtDecode<User>(token);
     setUser(decoded);
-    Cookies.set('token', token, { expires: 7 }); // Set cookie to expire in 7 days
-    console.log('User logged in:', decoded);
+    Cookies.set('token', token, { expires: 7 });
   };
 
   const logout = () => {
