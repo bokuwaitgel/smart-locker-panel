@@ -7,6 +7,10 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          memory: 3g
     environment:
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
