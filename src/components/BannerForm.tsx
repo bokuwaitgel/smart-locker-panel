@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import api from '@/lib/api';
 import { Upload, Image as ImageIcon, Video, AlertCircle } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('BannerForm');
 
 interface Props {
   onSaved?: () => void;
@@ -41,7 +44,7 @@ export default function BannerForm({ onSaved }: Props) {
       if (fileInput) fileInput.value = '';
     } catch (err) {
       setError('Failed to save banner');
-      console.error(err);
+      log.error('Failed to save banner', err);
     } finally {
       setLoading(false);
     }

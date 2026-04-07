@@ -5,6 +5,9 @@ import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
 import { isAxiosError } from 'axios';
 import { Lock, LockOpen, AlertCircle, Filter, Unlock, Package } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Lockers');
 
 interface Locker {
   id: number;
@@ -37,7 +40,7 @@ export default function LockersPage() {
       setLockers(response.data.data);
       setActionMessage(null);
     } catch (error) {
-      console.error('Failed to fetch lockers:', error);
+      log.error('Failed to fetch lockers', error);
     } finally {
       setLoading(false);
     }
@@ -48,7 +51,7 @@ export default function LockersPage() {
       await api.put(`/lockers/${id}/status`, { status });
       fetchLockers();
     } catch (error) {
-      console.error('Failed to update status:', error);
+      log.error('Failed to update locker status', error);
     }
   };
 
@@ -68,7 +71,7 @@ export default function LockersPage() {
           `Locker ${locker.lockerNumber} open request sent successfully.`,
       });
     } catch (error) {
-      console.error('Failed to open locker:', error);
+      log.error('Failed to open locker', error);
       let message = 'Failed to open locker. Please try again.';
 
       if (isAxiosError(error)) {

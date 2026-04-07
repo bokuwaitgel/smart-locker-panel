@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import BannerForm from '@/components/BannerForm';
 import { Image as ImageIcon, Video, CheckCircle, XCircle, Trash2, Power, Clock } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Banner');
 
 interface Banner {
   id: number;
@@ -24,7 +27,7 @@ export default function BannerPage() {
       const res = await api.get('/banner');
       setBanners(res.data.data || []);
     } catch (err) {
-      console.error('Failed to load banners', err);
+      log.error('Failed to load banners', err);
     } finally {
       setLoading(false);
     }
@@ -35,7 +38,7 @@ export default function BannerPage() {
       await api.put(`/banner/${id}`, { status: !currentStatus });
       fetchBanners();
     } catch (err) {
-      console.error('Failed to update banner status', err);
+      log.error('Failed to update banner status', err);
     }
   };
 
@@ -45,7 +48,7 @@ export default function BannerPage() {
       await api.delete(`/banner/${id}`);
       fetchBanners();
     } catch (err) {
-      console.error('Failed to delete banner', err);
+      log.error('Failed to delete banner', err);
     }
   };
 

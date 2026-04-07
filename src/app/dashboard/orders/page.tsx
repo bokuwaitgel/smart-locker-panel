@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
 import { Package, Clock, CheckCircle, XCircle, Search, Filter, Smartphone } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Orders');
 
 interface DeliveryOrder {
   id: number;
@@ -45,7 +48,7 @@ export default function OrdersPage() {
       const response = await api.get(url);
       setOrders(response.data.data);
     } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      log.error('Failed to fetch orders', error);
     } finally {
       setLoading(false);
     }

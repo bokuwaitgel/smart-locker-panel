@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
 import { Package, MapPin, Plus, RefreshCw, X, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('Containers');
 
 interface Container {
     id: number;
@@ -34,7 +37,7 @@ export default function ContainersPage() {
             const response = await api.get('/containers');
             setContainers(Array.isArray(response.data.data) ? response.data.data : []);
         } catch (error) {
-            console.error('Failed to fetch containers:', error);
+            log.error('Failed to fetch containers', error);
         } finally {
             setLoading(false);
         }
@@ -48,7 +51,7 @@ export default function ContainersPage() {
             setShowForm(false);
             fetchContainers();
         } catch (error) {
-            console.error('Failed to create container:', error);
+            log.error('Failed to create container', error);
         }
     };
 
@@ -57,7 +60,7 @@ export default function ContainersPage() {
             await api.put(`/containers/${id}/status`, { status });
             fetchContainers();
         } catch (error) {
-            console.error('Failed to update status:', error);
+            log.error('Failed to update container status', error);
         }
     };
 
