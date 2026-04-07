@@ -37,5 +37,8 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+# Limit the V8 old-space heap to 512 MB in production.
+# Without this Node.js can consume the majority of available host RAM.
+ENV NODE_OPTIONS="--max-old-space-size=512"
 
 CMD ["node", "server.js"]
