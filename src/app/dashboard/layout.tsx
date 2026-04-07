@@ -4,17 +4,9 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Lock, 
-  ShoppingCart, 
-  Image as ImageIcon,
-  LogOut,
-  Menu,
-  X,
-  User
-} from 'lucide-react';
+import { LayoutDashboard, Package, Lock, ShoppingCart, Image as ImageIcon } from 'lucide-react';
+import { DashboardSidebar } from '@/components/dashboard/layout/DashboardSidebar';
+import { DashboardTopbar } from '@/components/dashboard/layout/DashboardTopbar';
 
 export default function DashboardLayout({
   children,
@@ -52,10 +44,10 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_30%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_100%)]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-700 font-medium">Loading dashboard...</p>
+          <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-slate-900 border-t-transparent"></div>
+          <p className="mt-4 text-sm font-medium text-slate-600">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -73,125 +65,43 @@ export default function DashboardLayout({
     { name: 'Banner', href: '/dashboard/banner', icon: ImageIcon, current: pathname === '/dashboard/banner' },
   ];
 
+  const activeTitle = navigation.find((item) => item.current)?.name || 'Dashboard';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Mobile Backdrop */}
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.08),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.08),_transparent_20%),linear-gradient(180deg,_#f8fafc_0%,_#f1f5f9_100%)]">
       {isMobile && sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        <div
+          className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-white shadow-xl transition-all duration-300 ${
-          isMobile 
-            ? sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'
-            : sidebarOpen ? 'w-64' : 'w-20'
-        }`}
-      >
-        {/* Logo & Toggle */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600">
-          {sidebarOpen && (
-            <h1 className="text-base sm:text-lg font-bold text-white truncate">
-              24/7 Delivery Box
-            </h1>
-          )}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-white/20 text-white transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
-            aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
-          >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
+      <DashboardSidebar
+        navigation={navigation}
+        sidebarOpen={sidebarOpen}
+        isMobile={isMobile}
+        userName={user?.name || user?.email || 'Operator'}
+        userEmail={user?.email}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onCloseMobile={() => setSidebarOpen(false)}
+        onLogout={logout}
+      />
 
-        {/* Navigation */}
-        <nav className="mt-6 px-3 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <a
-                key={item.name}
-                href={item.href}
-                onClick={() => isMobile && setSidebarOpen(false)}
-                className={`flex items-center px-3 py-3 rounded-lg transition-all duration-200 group min-h-[48px] ${
-                  item.current
-                    ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md'
-                    : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
-                }`}
-              >
-                <Icon
-                  size={22}
-                  className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} ${
-                    item.current ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'
-                  }`}
-                />
-                {sidebarOpen && (
-                  <span className="font-medium text-sm sm:text-base">{item.name}</span>
-                )}
-              </a>
-            );
-          })}
-        </nav>
-
-        {/* User Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-gray-50">
-          <div className={`flex items-center ${sidebarOpen ? 'space-x-3' : 'justify-center'}`}>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
-              <User size={20} />
-            </div>
-            {sidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {user?.name || user?.email}
-                </p>
-                <button
-                  onClick={logout}
-                  className="flex items-center text-xs text-red-600 hover:text-red-700 mt-1"
-                >
-                  <LogOut size={12} className="mr-1" />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
       <main
         className={`transition-all duration-300 ${
-          isMobile ? 'ml-0' : sidebarOpen ? 'ml-64' : 'ml-20'
+          isMobile ? 'ml-0' : sidebarOpen ? 'ml-72' : 'ml-24'
         }`}
       >
-        {/* Top Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-          <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-            {/* Mobile Menu Button */}
-            {isMobile && (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="p-2 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors lg:hidden min-w-[40px] min-h-[40px] flex items-center justify-center"
-                aria-label="Open menu"
-              >
-                <Menu size={24} />
-              </button>
-            )}
-            
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {navigation.find(item => item.current)?.name || 'Dashboard'}
-            </h2>
-            
-            {/* Spacer for mobile */}
-            {isMobile && <div className="w-10"></div>}
-          </div>
-        </header>
+        <div className="p-4 sm:p-6 lg:p-8">
+          {/* <DashboardTopbar
+            title={activeTitle}
+            isMobile={isMobile}
+            onOpenSidebar={() => setSidebarOpen(true)}
+          /> */}
 
-        {/* Page Content */}
-        <div className="p-4 sm:p-6">
+          <div className="mt-6">
           {children}
+          </div>
         </div>
       </main>
     </div>

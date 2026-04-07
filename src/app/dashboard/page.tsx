@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import api from '@/lib/api';
 import { 
   Package, 
@@ -9,8 +10,12 @@ import {
   LockOpen, 
   TrendingUp,
   ArrowRight,
-  Activity
+  Activity,
+  Sparkles,
+  ChartNoAxesColumn,
+  ShieldCheck
 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface Stats {
   totalContainers: number;
@@ -39,7 +44,7 @@ export default function DashboardPage() {
           availableLockers: lockerRes.data.availableLockers || 0,
           occupiedLockers: lockerRes.data.occupiedLockers || 0,
         });
-      } catch (error) {
+      } catch {
         setStats({ totalContainers: 0, activeContainers: 0, totalLockers: 0, availableLockers: 0, occupiedLockers: 0 });
       } finally {
         setLoading(false);
@@ -51,10 +56,10 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-16">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-900 border-t-transparent"></div>
+          <p className="mt-4 text-sm font-medium text-slate-500">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -65,33 +70,52 @@ export default function DashboardPage() {
       title: 'Total Containers',
       value: stats?.totalContainers || 0,
       icon: Package,
-      gradient: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50',
-      iconColor: 'text-blue-600',
+      gradient: 'from-[#1C1F26] to-[#111827]',
+      bgColor: 'bg-[#ede9fe]',
+      iconColor: 'text-[#1C1F26]',
     },
     {
       title: 'Active Containers',
       value: stats?.activeContainers || 0,
       icon: PackageCheck,
-      gradient: 'from-green-500 to-green-600',
-      bgColor: 'bg-green-50',
-      iconColor: 'text-green-600',
+      gradient: 'from-[#f2cd54] to-[#c89612]',
+      bgColor: 'bg-[#fef3c7]',
+      iconColor: 'text-[#a16207]',
     },
     {
       title: 'Total Lockers',
       value: stats?.totalLockers || 0,
       icon: Lock,
-      gradient: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50',
-      iconColor: 'text-purple-600',
+      gradient: 'from-[#1C1F26] to-[#111827]',
+      bgColor: 'bg-[#ede9fe]',
+      iconColor: 'text-[#1C1F26]',
     },
     {
       title: 'Available Lockers',
       value: stats?.availableLockers || 0,
       icon: LockOpen,
-      gradient: 'from-amber-500 to-amber-600',
-      bgColor: 'bg-amber-50',
-      iconColor: 'text-amber-600',
+      gradient: 'from-[#f2cd54] to-[#d4a514]',
+      bgColor: 'bg-[#fef3c7]',
+      iconColor: 'text-[#a16207]',
+    },
+  ];
+
+  const occupancyRate = stats?.totalLockers 
+    ? ((stats.occupiedLockers / stats.totalLockers) * 100).toFixed(1)
+    : 0;
+
+  const insights = [
+    {
+      title: 'Occupancy trend',
+      value: `${occupancyRate}%`,
+      description: 'Current locker usage across the network',
+      icon: ChartNoAxesColumn,
+    },
+    {
+      title: 'Available now',
+      value: `${stats?.availableLockers || 0}`,
+      description: 'Lockers ready for the next delivery',
+      icon: ShieldCheck,
     },
   ];
 
@@ -101,121 +125,166 @@ export default function DashboardPage() {
       description: 'Add, edit, and monitor containers',
       href: '/dashboard/containers',
       icon: Package,
-      gradient: 'from-blue-500 to-blue-600',
+      gradient: 'from-[#1C1F26] to-[#111827]',
     },
     {
       title: 'Manage Lockers',
       description: 'View and update locker status',
       href: '/dashboard/lockers',
       icon: Lock,
-      gradient: 'from-green-500 to-green-600',
+      gradient: 'from-[#f2cd54] to-[#c89612]',
     },
     {
       title: 'Delivery Orders',
       description: 'Manage orders and pickup codes',
       href: '/dashboard/orders',
       icon: Activity,
-      gradient: 'from-purple-500 to-purple-600',
+      gradient: 'from-[#1C1F26] to-[#111827]',
     },
   ];
 
-  const occupancyRate = stats?.totalLockers 
-    ? ((stats.occupiedLockers / stats.totalLockers) * 100).toFixed(1)
-    : 0;
-
   return (
-    <div>
+    <div className="space-y-4">
+   
       {/* Welcome Section */}
-      <div className="mb-6 sm:mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl sm:rounded-2xl p-6 sm:p-8 text-white shadow-xl">
-        <div className="flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome Back!</h1>
-            <p className="text-sm sm:text-base text-blue-100">
-              Here's what's happening with your smart locker system today.
-            </p>
-          </div>
-          <TrendingUp size={36} className="text-blue-200 opacity-50 hidden sm:block sm:w-12 sm:h-12" />
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
-        {statsCards.map((card, index) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={index}
-              className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group touch-manipulation"
-            >
-              <div className="p-5 sm:p-6">
-                <div className="flex items-center justify-between mb-3 sm:mb-4">
-                  <div className={`p-2.5 sm:p-3 rounded-lg ${card.bgColor}`}>
-                    <Icon size={20} className={`sm:w-6 sm:h-6 ${card.iconColor}`} />
-                  </div>
-                  <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${card.gradient} animate-pulse`}></div>
-                </div>
-                <h3 className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
-                  {card.title}
-                </h3>
-                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  {card.value}
+      <div className="grid gap-3 xl:min-h-[20vh] xl:grid-cols-[1.55fr_0.95fr]">
+        <Card className="overflow-hidden border-slate-200/70 bg-[radial-gradient(circle_at_top_left,_rgba(107,70,193,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(242,205,84,0.18),_transparent_28%),linear-gradient(135deg,_#ffffff_0%,_#faf5ff_55%,_#fffbea_100%)]">
+          <CardContent className="grid h-full gap-3 p-3.5 lg:grid-cols-[1.3fr_0.85fr] lg:p-4">
+            <div className="space-y-2.5">
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                <Sparkles className="h-3.5 w-3.5" />
+                Smart locker overview
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold tracking-tight text-slate-950 sm:text-xl">Welcome back!</h1>
+                <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
+                  Here&apos;s what&apos;s happening with your smart locker system today. Monitor infrastructure health, track occupancy, and jump into the most important operations faster.
                 </p>
               </div>
-              <div className={`h-1 bg-gradient-to-r ${card.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300`}></div>
+              <div className="flex flex-wrap gap-1.5">
+                <div className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:text-sm">
+                  <TrendingUp className="h-3.5 w-3.5 text-[#1C1F26]" />
+                  Active containers: {stats?.activeContainers || 0}
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm sm:text-sm">
+                  <LockOpen className="h-3.5 w-3.5 text-[#a16207]" />
+                  Available lockers: {stats?.availableLockers || 0}
+                </div>
+              </div>
             </div>
+
+            <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-1">
+              {insights.map((insight) => {
+                const InsightIcon = insight.icon;
+
+                return (
+                  <div key={insight.title} className="rounded-[20px] border border-white/70 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                        <InsightIcon className="h-3.5 w-3.5" />
+                      </div>
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Live</span>
+                    </div>
+                    <p className="mt-2 text-xs font-medium text-slate-500 sm:text-sm">{insight.title}</p>
+                    <p className="mt-0.5 text-lg font-semibold text-slate-950 sm:text-xl">{insight.value}</p>
+                    <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:text-xs">{insight.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200/70 bg-white/95">
+          <CardContent className="h-full p-3.5 mt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Network summary</p>
+                <h2 className="mt-1 text-sm font-semibold text-slate-950 sm:text-base">System health</h2>
+              </div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                <Activity className="h-3.5 w-3.5" />
+              </div>
+            </div>
+
+            <div className="mt-2.5 space-y-1.5">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-1.5">
+                <span className="text-xs font-medium text-slate-500 sm:text-sm">Total containers</span>
+                <span className="text-xs font-semibold text-slate-950 sm:text-sm">{stats?.totalContainers || 0}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-1.5">
+                <span className="text-xs font-medium text-slate-500 sm:text-sm">Total lockers</span>
+                <span className="text-xs font-semibold text-slate-950 sm:text-sm">{stats?.totalLockers || 0}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-1.5">
+                <span className="text-xs font-medium text-slate-500 sm:text-sm">Occupied lockers</span>
+                <span className="text-xs font-semibold text-slate-950 sm:text-sm">{stats?.occupiedLockers || 0}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+     {/* Stats Cards */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {statsCards.map((card, index) => {
+          const Icon = card.icon;
+
+          return (
+            <Card
+              key={index}
+              className="group relative min-h-[5vh] overflow-hidden border-slate-200/70 bg-white/95 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_-36px_rgba(15,23,42,0.35)]"
+            >
+              <CardContent className="relative flex h-full items-center justify-center gap-3 px-3 py-4 mt-2">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-2xl border border-white/60 ${card.bgColor} shadow-sm`}>
+                  <Icon size={16} className={card.iconColor} />
+                </div>
+
+                <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                  <p className="truncate text-[11px] font-medium leading-4 text-slate-500 sm:text-xs">
+                    {card.title}
+                  </p>
+                  <p className="shrink-0 text-lg font-semibold tracking-tight text-slate-950 sm:text-xl mr-2">
+                    {card.value}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
-
-      {/* Occupancy Rate Card */}
-      <div className="bg-white rounded-xl shadow-md p-5 sm:p-6 mb-6 sm:mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Locker Occupancy Rate</h3>
-          <Activity className="text-gray-400" size={18} />
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-end space-y-2 sm:space-y-0 sm:space-x-4">
-          <div className="text-3xl sm:text-4xl font-bold text-gray-900">{occupancyRate}%</div>
-          <div className="text-xs sm:text-sm text-gray-600 sm:pb-2">
-            {stats?.occupiedLockers} of {stats?.totalLockers} lockers occupied
-          </div>
-        </div>
-        <div className="mt-4 bg-gray-200 rounded-full h-2.5 sm:h-3 overflow-hidden">
-          <div
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-500"
-            style={{ width: `${occupancyRate}%` }}
-          ></div>
-        </div>
-      </div>
-
+    
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+       
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {quickActions.map((action, index) => {
             const Icon = action.icon;
+
             return (
-              <a
+              <Link
                 key={index}
                 href={action.href}
-                className="group relative bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden touch-manipulation active:scale-95"
+                className="group"
               >
-                <div className="p-5 sm:p-6">
-                  <div className={`inline-flex p-2.5 sm:p-3 rounded-lg bg-gradient-to-r ${action.gradient} mb-3 sm:mb-4`}>
-                    <Icon size={20} className="text-white sm:w-6 sm:h-6" />
-                  </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                    {action.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3 sm:mb-4">
-                    {action.description}
-                  </p>
-                  <div className="flex items-center text-blue-600 font-medium text-sm">
-                    <span>Get Started</span>
-                    <ArrowRight size={16} className="ml-2 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
-                <div className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${action.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300`}></div>
-              </a>
+                <Card className="h-full overflow-hidden border-slate-200/70 bg-white/95 transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_-36px_rgba(15,23,42,0.35)]">
+                  <CardContent className="p-5 mt-4">
+                    <div className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-r ${action.gradient}`}>
+                      <Icon size={18} className="text-white" />
+                    </div>
+                    <h3 className="mt-4 text-base font-semibold text-slate-950 transition-colors group-hover:text-[#1C1F26]">
+                      {action.title}
+                    </h3>
+                    <p className="mt-1.5 text-sm leading-5 text-slate-500">
+                      {action.description}
+                    </p>
+                    <div className="mt-4 flex items-center text-sm font-medium text-[#1C1F26]">
+                      <span>Open section</span>
+                      <ArrowRight size={16} className="ml-2 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             );
           })}
         </div>

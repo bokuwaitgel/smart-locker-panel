@@ -60,7 +60,7 @@ export default function BannerPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#1C1F26] border-t-transparent mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading banners...</p>
         </div>
       </div>
@@ -120,13 +120,13 @@ export default function BannerPage() {
                           </h3>
                           <div className="flex items-center space-x-2">
                             {b.status ? (
-                              <CheckCircle size={18} className="text-green-600" />
+                              <CheckCircle size={18} className="text-[#1C1F26]" />
                             ) : (
                               <XCircle size={18} className="text-gray-400" />
                             )}
                             <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full ${
                               b.status 
-                                ? 'bg-green-100 text-green-800' 
+                                ? 'bg-slate-100 text-[#1C1F26]' 
                                 : 'bg-gray-100 text-gray-600'
                             }`}>
                               {b.status ? 'Active' : 'Inactive'}
@@ -146,7 +146,7 @@ export default function BannerPage() {
                           className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${
                             b.status
                               ? 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                              : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                              : 'bg-gradient-to-r from-[#1C1F26] to-[#111827] hover:from-[#111827] hover:to-[#1C1F26] text-white'
                           }`}
                         >
                           <Power size={16} />

@@ -53,8 +53,8 @@ export default function BannerForm({ onSaved }: Props) {
   return (
     <form onSubmit={submit} className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 bg-blue-50 rounded-lg">
-          <Upload size={20} className="text-blue-600" />
+        <div className="p-2 bg-[#ede9fe] rounded-lg">
+          <Upload size={20} className="text-[#1C1F26]" />
         </div>
         <h2 className="text-lg font-semibold text-gray-900">Upload Banner</h2>
       </div>
@@ -75,7 +75,7 @@ export default function BannerForm({ onSaved }: Props) {
               onClick={() => setType('image')}
               className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
                 type === 'image'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-[#1C1F26] bg-[#ede9fe] text-[#1C1F26]'
                   : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
               }`}
             >
@@ -87,7 +87,7 @@ export default function BannerForm({ onSaved }: Props) {
               onClick={() => setType('video')}
               className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-lg border-2 transition-all ${
                 type === 'video'
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-[#1C1F26] bg-[#ede9fe] text-[#1C1F26]'
                   : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
               }`}
             >
@@ -106,7 +106,7 @@ export default function BannerForm({ onSaved }: Props) {
               type="file" 
               accept={type === 'image' ? 'image/*' : 'video/*'}
               onChange={(e) => setFile(e.target.files?.[0] || null)} 
-              className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all"
+              className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#1C1F26] focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-l-lg file:border-0 file:text-sm file:font-medium file:bg-[#ede9fe] file:text-[#1C1F26] hover:file:bg-[#ddd6fe] transition-all"
             />
           </div>
           {file && (
@@ -122,7 +122,7 @@ export default function BannerForm({ onSaved }: Props) {
           className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-medium shadow-md transition-all ${
             loading || !file
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white'
+              : 'bg-gradient-to-r from-[#1C1F26] to-[#111827] hover:from-[#111827] hover:to-[#1C1F26] text-white'
           }`}
         >
           <Upload size={18} />

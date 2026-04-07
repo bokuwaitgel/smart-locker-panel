@@ -4,8 +4,13 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
 import { isAxiosError } from 'axios';
-import { Lock, LockOpen, AlertCircle, Filter, Unlock, Package } from 'lucide-react';
+import { Grid2x2, List, Lock, Filter, Search } from 'lucide-react';
 import { createLogger } from '@/lib/logger';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { LockerCard } from '@/components/LockerCard';
 
 const log = createLogger('Lockers');
 
@@ -21,7 +26,10 @@ export default function LockersPage() {
   const { isAuthenticated } = useAuth();
   const [lockers, setLockers] = useState<Locker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [searchLockerNumber, setSearchLockerNumber] = useState('');
   const [selectedBoardId, setSelectedBoardId] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [actionLockerId, setActionLockerId] = useState<number | null>(null);
   const [actionMessage, setActionMessage] = useState<
     | { type: 'success' | 'error'; text: string }
@@ -91,184 +99,178 @@ export default function LockersPage() {
     }
   };
 
-  const filteredLockers = selectedBoardId
-    ? lockers.filter(locker => locker.boardId === selectedBoardId)
-    : lockers;
+  const filteredLockers = lockers.filter((locker) => {
+    const matchesSearch = searchLockerNumber
+      ? locker.lockerNumber.toLowerCase().includes(searchLockerNumber.toLowerCase())
+      : true;
+    const matchesBoard = selectedBoardId ? locker.boardId === selectedBoardId : true;
+    const matchesStatus = selectedStatus ? locker.status === selectedStatus : true;
+
+    return matchesSearch && matchesBoard && matchesStatus;
+  });
 
   const uniqueBoardIds = [...new Set(lockers.map(l => l.boardId))];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-16">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading lockers...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-900 border-t-transparent"></div>
+          <p className="mt-4 text-sm font-medium text-slate-500">Loading lockers...</p>
         </div>
       </div>
     );
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'AVAILABLE':
-        return <LockOpen size={20} className="text-green-600" />;
-      case 'OCCUPIED':
-        return <Lock size={20} className="text-blue-600" />;
-      case 'MAINTENANCE':
-        return <AlertCircle size={20} className="text-yellow-600" />;
-      default:
-        return <Lock size={20} className="text-gray-600" />;
-    }
-  };
+  const availableCount = filteredLockers.filter((locker) => locker.status === 'AVAILABLE').length;
+  const occupiedCount = filteredLockers.filter((locker) => locker.status === 'OCCUPIED').length;
+  const maintenanceCount = filteredLockers.filter((locker) => locker.status === 'MAINTENANCE').length;
 
   return (
-    <div>
-      {/* Filter Section */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <Filter size={20} className="text-gray-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Filter Lockers</h3>
-        </div>
-        <select
-          value={selectedBoardId}
-          onChange={(e) => setSelectedBoardId(e.target.value)}
-          className="w-full md:w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all"
-        >
-          <option value="">All Containers</option>
-          {uniqueBoardIds.map(boardId => (
-            <option key={boardId} value={boardId}>{boardId}</option>
-          ))}
-        </select>
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div>
+        <Card className="w-full overflow-hidden border-slate-200/70 bg-[radial-gradient(circle_at_top_left,_rgba(107,70,193,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(242,205,84,0.16),_transparent_28%),linear-gradient(135deg,_#ffffff_0%,_#faf5ff_55%,_#fffbea_100%)]">
+          <CardContent className="grid w-full gap-6 p-6 lg:grid-cols-[1.2fr_0.95fr] lg:p-5">
+            <div className="rounded-[18px] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                  <Filter className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Filter</p>
+                  <h2 className="mt-1 text-lg font-semibold text-slate-950">Locker filters</h2>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-3 lg:grid-cols-3">
+                <div className="space-y-2 lg:col-span-3">
+                  <label className="text-sm font-medium text-slate-700">Search locker number</label>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      value={searchLockerNumber}
+                      onChange={(e) => setSearchLockerNumber(e.target.value)}
+                      placeholder="Search by locker number"
+                      className="rounded-2xl border-slate-200 bg-white pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Select container</label>
+                  <Select
+                    value={selectedBoardId}
+                    onChange={(e) => setSelectedBoardId(e.target.value)}
+                    className="rounded-2xl border-slate-200"
+                  >
+                    <option value="">All Containers</option>
+                    {uniqueBoardIds.map((boardId) => (
+                      <option key={boardId} value={boardId}>{boardId}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Locker status</label>
+                  <Select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="rounded-2xl border-slate-200"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="AVAILABLE">Available</option>
+                    <option value="OCCUPIED">Occupied</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                    <option value="PENDING">Pending</option>
+                  </Select>
+                </div>
+              </div>
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                Showing {filteredLockers.length} locker{filteredLockers.length === 1 ? '' : 's'} in the current view.
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">View mode</p>
+                  <p className="mt-1 text-sm font-medium text-slate-700">Choose grid or list</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={viewMode === 'list' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('list')}
+                    className="rounded-xl"
+                  >
+                    <List className="h-4 w-4" />
+                    List
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={viewMode === 'grid' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('grid')}
+                    className="rounded-xl"
+                  >
+                    <Grid2x2 className="h-4 w-4" />
+                    Grid
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <span className="text-sm font-medium text-slate-500">Total lockers</span>
+                <span className="text-lg font-semibold text-slate-950">{filteredLockers.length}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-[#ddd6fe] bg-[#ede9fe]/80 px-4 py-3">
+                <span className="text-sm font-medium text-[#1C1F26]">Available</span>
+                <span className="text-lg font-semibold text-[#1C1F26]">{availableCount}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-[#ddd6fe] bg-[#ede9fe]/80 px-4 py-3">
+                <span className="text-sm font-medium text-[#1C1F26]">Occupied</span>
+                <span className="text-lg font-semibold text-[#1C1F26]">{occupiedCount}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-[#f2cd54]/45 bg-[#fef3c7]/80 px-4 py-3">
+                <span className="text-sm font-medium text-[#a16207]">Maintenance</span>
+                <span className="text-lg font-semibold text-[#a16207]">{maintenanceCount}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {actionMessage && (
         <div
-          className={`mb-6 rounded-xl border-2 p-4 text-sm font-medium ${
+          className={`rounded-3xl border p-4 text-sm font-medium ${
             actionMessage.type === 'success'
-              ? 'border-green-300 bg-green-50 text-green-800'
-              : 'border-red-300 bg-red-50 text-red-800'
+              ? 'border-slate-200 bg-slate-100 text-[#1C1F26]'
+              : 'border-rose-200 bg-rose-50 text-rose-800'
           }`}
         >
           {actionMessage.text}
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-md p-6 border border-gray-200">
-          <div className="flex items-center justify-between mb-2">
-            <Lock size={24} className="text-gray-600" />
-            <div className="text-3xl font-bold text-gray-900">
-              {filteredLockers.length}
-            </div>
-          </div>
-          <div className="text-sm font-medium text-gray-600">Total Lockers</div>
-        </div>
-        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-md p-6 border border-green-200">
-          <div className="flex items-center justify-between mb-2">
-            <LockOpen size={24} className="text-green-600" />
-            <div className="text-3xl font-bold text-green-700">
-              {filteredLockers.filter(l => l.status === 'AVAILABLE').length}
-            </div>
-          </div>
-          <div className="text-sm font-medium text-green-700">Available</div>
-        </div>
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-md p-6 border border-blue-200">
-          <div className="flex items-center justify-between mb-2">
-            <Lock size={24} className="text-blue-600" />
-            <div className="text-3xl font-bold text-blue-700">
-              {filteredLockers.filter(l => l.status === 'OCCUPIED').length}
-            </div>
-          </div>
-          <div className="text-sm font-medium text-blue-700">Occupied</div>
-        </div>
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl shadow-md p-6 border border-yellow-200">
-          <div className="flex items-center justify-between mb-2">
-            <AlertCircle size={24} className="text-yellow-600" />
-            <div className="text-3xl font-bold text-yellow-700">
-              {filteredLockers.filter(l => l.status === 'MAINTENANCE').length}
-            </div>
-          </div>
-          <div className="text-sm font-medium text-yellow-700">Maintenance</div>
-        </div>
-      </div>
-
-      {/* Lockers Grid */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className={viewMode === 'grid' ? 'grid gap-3 md:grid-cols-2 xl:grid-cols-3' : 'space-y-2'}>
         {filteredLockers.map((locker) => (
-          <div key={locker.id} className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
-            <div className={`p-4 ${
-              locker.status === 'AVAILABLE' 
-                ? 'bg-gradient-to-r from-green-500 to-green-600' 
-                : locker.status === 'OCCUPIED'
-                ? 'bg-gradient-to-r from-blue-500 to-blue-600'
-                : locker.status === 'MAINTENANCE'
-                ? 'bg-gradient-to-r from-yellow-500 to-yellow-600'
-                : 'bg-gradient-to-r from-gray-500 to-gray-600'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-white/20 rounded-lg">
-                    {getStatusIcon(locker.status)}
-                  </div>
-                  <h3 className="text-lg font-bold text-white">
-                    {locker.lockerNumber}
-                  </h3>
-                </div>
-                <span className="px-3 py-1 text-xs font-semibold rounded-full bg-white/30 text-white backdrop-blur-sm">
-                  {locker.status}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <div className="flex items-center space-x-2 text-sm">
-                <Package size={16} className="text-gray-400" />
-                <span className="text-gray-700 font-medium">Container: {locker.boardId}</span>
-              </div>
-
-              {locker.description && (
-                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                  {locker.description}
-                </p>
-              )}
-
-              <div className="pt-4 border-t border-gray-100 space-y-3">
-                <select
-                  value={locker.status}
-                  onChange={(e) => updateStatus(locker.id, e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 transition-all"
-                >
-                  <option value="AVAILABLE">Available</option>
-                  <option value="OCCUPIED">Occupied</option>
-                  <option value="MAINTENANCE">Maintenance</option>
-                  <option value="PENDING">Pending</option>
-                </select>
-                
-                <button
-                  onClick={() => handleOpenLocker(locker)}
-                  disabled={actionLockerId === locker.id}
-                  className={`w-full flex items-center justify-center space-x-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white shadow-md transition-all ${
-                    actionLockerId === locker.id
-                      ? 'cursor-not-allowed bg-gray-400'
-                      : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
-                  }`}
-                >
-                  <Unlock size={16} />
-                  <span>{actionLockerId === locker.id ? 'Opening...' : 'Open Locker'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          <LockerCard
+            key={locker.id}
+            locker={locker}
+            onStatusChange={updateStatus}
+            onOpenLocker={() => handleOpenLocker(locker)}
+            isOpening={actionLockerId === locker.id}
+            variant={viewMode}
+          />
         ))}
       </div>
 
       {filteredLockers.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-xl shadow-md">
-          <Lock size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No lockers found</h3>
-          <p className="text-gray-600">Try adjusting your filters</p>
-        </div>
+        <Card className="border-dashed border-slate-300 bg-white/85">
+          <CardContent className="py-14 text-center">
+            <Lock className="mx-auto h-12 w-12 text-slate-400" />
+            <h3 className="mt-4 text-xl font-semibold text-slate-950">No lockers found</h3>
+            <p className="mt-2 text-sm text-slate-500">Try adjusting your locker number, container, or status filter to see available lockers.</p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
