@@ -2,8 +2,11 @@
 
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { LayoutDashboard, Package, Lock, ShoppingCart, Image as ImageIcon } from 'lucide-react';
+import { DashboardSidebar } from '@/components/dashboard/layout/DashboardSidebar';
+import { DashboardTopbar } from '@/components/dashboard/layout/DashboardTopbar';
 
 export default function DashboardLayout({
   children,
@@ -13,21 +16,38 @@ export default function DashboardLayout({
   const { user, logout, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  //check /dashboard, /dashboard/containers, /dashboard/lockers
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
     }
-    
   }, [isAuthenticated, isLoading, router]);
+
+  // Handle responsive sidebar
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_30%),linear-gradient(135deg,_#f8fafc_0%,_#eef2ff_100%)]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-slate-900 border-t-transparent"></div>
+          <p className="mt-4 text-sm font-medium text-slate-600">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -37,93 +57,52 @@ export default function DashboardLayout({
     return null;
   }
 
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, current: pathname === '/dashboard' },
+    { name: 'Containers', href: '/dashboard/containers', icon: Package, current: pathname === '/dashboard/containers' },
+    { name: 'Lockers', href: '/dashboard/lockers', icon: Lock, current: pathname === '/dashboard/lockers' },
+    { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart, current: pathname === '/dashboard/orders' },
+    { name: 'Banner', href: '/dashboard/banner', icon: ImageIcon, current: pathname === '/dashboard/banner' },
+  ];
+
+  const activeTitle = navigation.find((item) => item.current)?.name || 'Dashboard';
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">
-                Smart Locker Dashboard
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">
-                Welcome, {user?.name || user?.email}
-              </span>
-              <button
-                onClick={logout}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-              >
-                Logout
-              </button>
-            </div>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.08),_transparent_24%),radial-gradient(circle_at_bottom_right,_rgba(99,102,241,0.08),_transparent_20%),linear-gradient(180deg,_#f8fafc_0%,_#f1f5f9_100%)]">
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <DashboardSidebar
+        navigation={navigation}
+        sidebarOpen={sidebarOpen}
+        isMobile={isMobile}
+        userName={user?.name || user?.email || 'Operator'}
+        userEmail={user?.email}
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onCloseMobile={() => setSidebarOpen(false)}
+        onLogout={logout}
+      />
+
+      <main
+        className={`transition-all duration-300 ${
+          isMobile ? 'ml-0' : sidebarOpen ? 'ml-72' : 'ml-24'
+        }`}
+      >
+        <div className="p-4 sm:p-6 lg:p-8">
+          {/* <DashboardTopbar
+            title={activeTitle}
+            isMobile={isMobile}
+            onOpenSidebar={() => setSidebarOpen(true)}
+          /> */}
+
+          <div className="mt-6">
+          {children}
           </div>
         </div>
-      </header>
-
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
-            <a
-              href="/dashboard"
-              className={`border-b-2 py-4 px-1 text-sm font-medium ${
-                pathname === '/dashboard'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Dashboard
-            </a>
-            <a
-              href="/dashboard/containers"
-              className={`border-b-2 py-4 px-1 text-sm font-medium ${
-                pathname === '/dashboard/containers'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Containers
-            </a>
-             <a
-              href="/dashboard/lockers"
-              className={`border-b-2 py-4 px-1 text-sm font-medium ${
-                pathname === '/dashboard/lockers'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Lockers
-            </a>
-                        <a
-              href="/dashboard/orders"
-              className={`border-b-2 py-4 px-1 text-sm font-medium ${
-                pathname === '/dashboard/orders'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Orders
-            </a>
-                        <a
-                          href="/dashboard/banner"
-                          className={`border-b-2 py-4 px-1 text-sm font-medium ${
-                            pathname === '/dashboard/banner'
-                              ? 'border-blue-500 text-blue-600'
-                              : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                          }`}
-                        >
-                          Banner
-                        </a>
-          </div>
-        </div>
-      </nav>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {children}
       </main>
     </div>
   );

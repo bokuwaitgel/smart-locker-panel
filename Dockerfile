@@ -16,6 +16,8 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
+# next build is the memory-hungry step; without a cap it can OOM the box.
+ENV NODE_OPTIONS="--max-old-space-size=3072"
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
@@ -27,6 +29,9 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+# Limit the V8 old-space heap to 512 MB in production. Without this Node.js can
+# consume the majority of available host RAM.
+ENV NODE_OPTIONS="--max-old-space-size=512"
 
 RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nextjs -G nodejs
 

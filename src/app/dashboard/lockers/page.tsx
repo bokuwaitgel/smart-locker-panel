@@ -4,6 +4,15 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import api from '@/lib/api';
 import { isAxiosError } from 'axios';
+import { Grid2x2, List, Lock, Filter, Search } from 'lucide-react';
+import { createLogger } from '@/lib/logger';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { LockerCard } from '@/components/LockerCard';
+
+const log = createLogger('Lockers');
 
 interface Locker {
   id: number;
@@ -17,7 +26,10 @@ export default function LockersPage() {
   const { isAuthenticated } = useAuth();
   const [lockers, setLockers] = useState<Locker[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [searchLockerNumber, setSearchLockerNumber] = useState('');
   const [selectedBoardId, setSelectedBoardId] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [actionLockerId, setActionLockerId] = useState<number | null>(null);
   const [actionMessage, setActionMessage] = useState<
     | { type: 'success' | 'error'; text: string }
@@ -36,7 +48,7 @@ export default function LockersPage() {
       setLockers(response.data.data);
       setActionMessage(null);
     } catch (error) {
-      console.error('Failed to fetch lockers:', error);
+      log.error('Failed to fetch lockers', error);
     } finally {
       setLoading(false);
     }
@@ -47,7 +59,7 @@ export default function LockersPage() {
       await api.put(`/lockers/${id}/status`, { status });
       fetchLockers();
     } catch (error) {
-      console.error('Failed to update status:', error);
+      log.error('Failed to update locker status', error);
     }
   };
 
@@ -67,7 +79,7 @@ export default function LockersPage() {
           `Locker ${locker.lockerNumber} open request sent successfully.`,
       });
     } catch (error) {
-      console.error('Failed to open locker:', error);
+      log.error('Failed to open locker', error);
       let message = 'Failed to open locker. Please try again.';
 
       if (isAxiosError(error)) {
@@ -87,141 +99,179 @@ export default function LockersPage() {
     }
   };
 
-  const filteredLockers = selectedBoardId
-    ? lockers.filter(locker => locker.boardId === selectedBoardId)
-    : lockers;
+  const filteredLockers = lockers.filter((locker) => {
+    const matchesSearch = searchLockerNumber
+      ? locker.lockerNumber.toLowerCase().includes(searchLockerNumber.toLowerCase())
+      : true;
+    const matchesBoard = selectedBoardId ? locker.boardId === selectedBoardId : true;
+    const matchesStatus = selectedStatus ? locker.status === selectedStatus : true;
+
+    return matchesSearch && matchesBoard && matchesStatus;
+  });
 
   const uniqueBoardIds = [...new Set(lockers.map(l => l.boardId))];
 
   if (loading) {
-    return <div className="text-center py-8">Loading lockers...</div>;
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-900 border-t-transparent"></div>
+          <p className="mt-4 text-sm font-medium text-slate-500">Loading lockers...</p>
+        </div>
+      </div>
+    );
   }
 
-  return (
-    <div className="px-4 py-6 sm:px-0">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Locker Management</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Monitor and manage your smart lockers
-        </p>
-      </div>
+  const availableCount = filteredLockers.filter((locker) => locker.status === 'AVAILABLE').length;
+  const occupiedCount = filteredLockers.filter((locker) => locker.status === 'OCCUPIED').length;
+  const maintenanceCount = filteredLockers.filter((locker) => locker.status === 'MAINTENANCE').length;
 
-      {/* Filter */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Filter by Container
-        </label>
-        <select
-          value={selectedBoardId}
-          onChange={(e) => setSelectedBoardId(e.target.value)}
-          className="border-gray-300 border-2 text-black rounded-md p-2 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">All Containers</option>
-          {uniqueBoardIds.map(boardId => (
-            <option key={boardId} value={boardId}>{boardId}</option>
-          ))}
-        </select>
+  return (
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div>
+        <Card className="w-full overflow-hidden border-slate-200/70 bg-[radial-gradient(circle_at_top_left,_rgba(107,70,193,0.18),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(242,205,84,0.16),_transparent_28%),linear-gradient(135deg,_#ffffff_0%,_#faf5ff_55%,_#fffbea_100%)]">
+          <CardContent className="grid w-full gap-6 p-6 lg:grid-cols-[1.2fr_0.95fr] lg:p-5">
+            <div className="rounded-[18px] border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                  <Filter className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Filter</p>
+                  <h2 className="mt-1 text-lg font-semibold text-slate-950">Locker filters</h2>
+                </div>
+              </div>
+              <div className="mt-5 grid gap-3 lg:grid-cols-3">
+                <div className="space-y-2 lg:col-span-3">
+                  <label className="text-sm font-medium text-slate-700">Search locker number</label>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      value={searchLockerNumber}
+                      onChange={(e) => setSearchLockerNumber(e.target.value)}
+                      placeholder="Search by locker number"
+                      className="rounded-2xl border-slate-200 bg-white pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Select container</label>
+                  <Select
+                    value={selectedBoardId}
+                    onChange={(e) => setSelectedBoardId(e.target.value)}
+                    className="rounded-2xl border-slate-200"
+                  >
+                    <option value="">All Containers</option>
+                    {uniqueBoardIds.map((boardId) => (
+                      <option key={boardId} value={boardId}>{boardId}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">Locker status</label>
+                  <Select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="rounded-2xl border-slate-200"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="AVAILABLE">Available</option>
+                    <option value="OCCUPIED">Occupied</option>
+                    <option value="MAINTENANCE">Maintenance</option>
+                    <option value="PENDING">Pending</option>
+                  </Select>
+                </div>
+              </div>
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                Showing {filteredLockers.length} locker{filteredLockers.length === 1 ? '' : 's'} in the current view.
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">View mode</p>
+                  <p className="mt-1 text-sm font-medium text-slate-700">Choose grid or list</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={viewMode === 'list' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('list')}
+                    className="rounded-xl"
+                  >
+                    <List className="h-4 w-4" />
+                    List
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={viewMode === 'grid' ? 'default' : 'outline'}
+                    onClick={() => setViewMode('grid')}
+                    className="rounded-xl"
+                  >
+                    <Grid2x2 className="h-4 w-4" />
+                    Grid
+                  </Button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <span className="text-sm font-medium text-slate-500">Total lockers</span>
+                <span className="text-lg font-semibold text-slate-950">{filteredLockers.length}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-[#ddd6fe] bg-[#ede9fe]/80 px-4 py-3">
+                <span className="text-sm font-medium text-[#1C1F26]">Available</span>
+                <span className="text-lg font-semibold text-[#1C1F26]">{availableCount}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-[#ddd6fe] bg-[#ede9fe]/80 px-4 py-3">
+                <span className="text-sm font-medium text-[#1C1F26]">Occupied</span>
+                <span className="text-lg font-semibold text-[#1C1F26]">{occupiedCount}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl border border-[#f2cd54]/45 bg-[#fef3c7]/80 px-4 py-3">
+                <span className="text-sm font-medium text-[#a16207]">Maintenance</span>
+                <span className="text-lg font-semibold text-[#a16207]">{maintenanceCount}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {actionMessage && (
         <div
-          className={`mb-6 rounded-md border p-4 text-sm ${
+          className={`rounded-3xl border p-4 text-sm font-medium ${
             actionMessage.type === 'success'
-              ? 'border-green-200 bg-green-50 text-green-700'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-slate-200 bg-slate-100 text-[#1C1F26]'
+              : 'border-rose-200 bg-rose-50 text-rose-800'
           }`}
         >
           {actionMessage.text}
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4 mb-6">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-2xl font-bold text-gray-900">
-            {filteredLockers.length}
-          </div>
-          <div className="text-sm text-gray-500">Total Lockers</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-2xl font-bold text-green-600">
-            {filteredLockers.filter(l => l.status === 'AVAILABLE').length}
-          </div>
-          <div className="text-sm text-gray-500">Available</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-2xl font-bold text-blue-600">
-            {filteredLockers.filter(l => l.status === 'OCCUPIED').length}
-          </div>
-          <div className="text-sm text-gray-500">Occupied</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="text-2xl font-bold text-yellow-600">
-            {filteredLockers.filter(l => l.status === 'MAINTENANCE').length}
-          </div>
-          <div className="text-sm text-gray-500">Maintenance</div>
-        </div>
-      </div>
-
-      {/* Lockers Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className={viewMode === 'grid' ? 'grid gap-3 md:grid-cols-2 xl:grid-cols-3' : 'space-y-2'}>
         {filteredLockers.map((locker) => (
-          <div key={locker.id} className="bg-white rounded-lg shadow p-4">
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {locker.lockerNumber}
-              </h3>
-              <span
-                className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                  locker.status === 'AVAILABLE'
-                    ? 'bg-green-100 text-green-800'
-                    : locker.status === 'OCCUPIED'
-                    ? 'bg-blue-100 text-blue-800'
-                    : locker.status === 'MAINTENANCE'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                {locker.status}
-              </span>
-            </div>
-
-            <p className="text-sm text-gray-600 mb-2">
-              Container: {locker.boardId}
-            </p>
-
-            {locker.description && (
-              <p className="text-sm text-gray-500 mb-4">
-                {locker.description}
-              </p>
-            )}
-
-            <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-              <select
-                value={locker.status}
-                onChange={(e) => updateStatus(locker.id, e.target.value)}
-                className="flex-1 text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-black border-2"
-              >
-                <option value="AVAILABLE">Available</option>
-                <option value="OCCUPIED">Occupied</option>
-                <option value="MAINTENANCE">Maintenance</option>
-                <option value="PENDING">Pending</option>
-              </select>
-              <button
-                onClick={() => handleOpenLocker(locker)}
-                disabled={actionLockerId === locker.id}
-                className={`flex-1 rounded-md px-3 py-2 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  actionLockerId === locker.id
-                    ? 'cursor-not-allowed bg-blue-300'
-                    : 'bg-blue-600 hover:bg-blue-700 focus:ring-blue-500'
-                }`}
-              >
-                {actionLockerId === locker.id ? 'Opening...' : 'Open Locker'}
-              </button>
-            </div>
-          </div>
+          <LockerCard
+            key={locker.id}
+            locker={locker}
+            onStatusChange={updateStatus}
+            onOpenLocker={() => handleOpenLocker(locker)}
+            isOpening={actionLockerId === locker.id}
+            variant={viewMode}
+          />
         ))}
       </div>
+
+      {filteredLockers.length === 0 && (
+        <Card className="border-dashed border-slate-300 bg-white/85">
+          <CardContent className="py-14 text-center">
+            <Lock className="mx-auto h-12 w-12 text-slate-400" />
+            <h3 className="mt-4 text-xl font-semibold text-slate-950">No lockers found</h3>
+            <p className="mt-2 text-sm text-slate-500">Try adjusting your locker number, container, or status filter to see available lockers.</p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

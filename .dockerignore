@@ -6,6 +6,7 @@ coverage
 .git
 .github
 .gitignore
+*.md
 .env*
 !.env.example
 npm-debug.log*
@@ -14,7 +15,6 @@ yarn-error.log*
 .DS_Store
 *.pem
 *.tsbuildinfo
-README.md
 deploy
 Dockerfile
 docker-compose.yml
