@@ -9,8 +9,23 @@ services:
     image: 247panel:latest
     container_name: 247panel
     restart: unless-stopped
-    # Bound to loopback — nginx on the host terminates TLS and proxies here.
+    # Loopback only, for debugging from the host. Public traffic arrives through
+    # the smart-locker nginx container, which reaches this over the shared network.
     ports:
       - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: production
+    networks:
+      default:
+      smart-locker:
+        aliases:
+          - 247panel
+
+networks:
+  default:
+  # The nginx + certbot stack in /root/smart-locker. nginx proxies to
+  # http://247panel:3000 over this network — it cannot use 127.0.0.1, which
+  # inside that container is nginx's own loopback.
+  smart-locker:
+    external: true
+    name: smart-locker_default
