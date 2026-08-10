@@ -62,39 +62,53 @@ pm2 startup   # run the command it prints
 Or systemd — see `247panel.service` in this directory. Note that with
 `output: "standalone"` set, `npm run start` still works normally.
 
-## 2. nginx vhost
+## 2. nginx vhost + SSL
+
+Both in one go, after step 1 is running:
+
+```bash
+sudo bash deploy/setup-247panel.sh
+```
+
+The script refuses to continue unless the app answers on `127.0.0.1:3000`, then
+installs the vhost, reloads nginx, checks the hostname stops reaching Express,
+issues the cert and runs a renewal dry-run.
+
+### Why `https://247panel.ekzomap.mn/` returns backend JSON
+
+```
+{"success":false,"message":"Cannot GET /","error":"Not Found",...}
+```
+
+That is Express, not the panel — the response carries `X-Powered-By: Express` and is
+byte-identical to `https://247box.ekzomap.mn/`. There is **no vhost for the panel
+hostname**, so nginx falls back to its default server (the 247box block) and proxies
+the request to the backend, which has no `GET /` route. The same missing vhost is why
+TLS fails: the only cert on the host is `CN=247box.ekzomap.mn`, SAN
+`DNS:247box.ekzomap.mn`, which does not cover `247panel`.
+
+Installing the vhost fixes both — server_name matching beats the default server.
+
+### Manual equivalent
 
 ```bash
 sudo cp deploy/nginx-247panel.conf /etc/nginx/sites-available/247panel.ekzomap.mn
 sudo ln -s /etc/nginx/sites-available/247panel.ekzomap.mn /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
-```
-
-Right now there is **no vhost for this hostname** — requests fall through to the
-247box default server, which is why `http://247panel.ekzomap.mn` 301s to https and
-then fails the TLS handshake.
-
-## 3. SSL
-
-The host currently serves one certificate, `CN=247box.ekzomap.mn`, SAN
-`DNS:247box.ekzomap.mn` only — it does not cover the panel hostname. Issue a
-separate cert:
-
-```bash
-sudo certbot --nginx -d 247panel.ekzomap.mn
+sudo certbot --nginx -d 247panel.ekzomap.mn --redirect
 sudo systemctl reload nginx
 ```
 
 Certbot edits the vhost in place, adding the `listen 443 ssl` block, the
-`ssl_certificate` paths and the http→https redirect. Renewal is handled by the
+`ssl_certificate` paths and the http→https redirect. Renewal runs off the
 `certbot.timer` systemd unit; confirm with `sudo certbot renew --dry-run`.
 
-Verify:
+Verify — subject must say `247panel`, and the header must **not** say Express:
 
 ```bash
 echo | openssl s_client -connect 247panel.ekzomap.mn:443 \
   -servername 247panel.ekzomap.mn 2>/dev/null | openssl x509 -noout -subject -dates
-curl -I https://247panel.ekzomap.mn/
+curl -sI https://247panel.ekzomap.mn/login
 ```
 
 ## 4. Backend CORS
