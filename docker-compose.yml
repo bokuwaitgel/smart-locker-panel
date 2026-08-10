@@ -15,6 +15,11 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: production
+      # Next's standalone server binds process.env.HOSTNAME. The Dockerfile ENV
+      # already wins over Docker's injected container hostname, but pin it here too
+      # so the bind address stays obvious and survives a Dockerfile edit.
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
     networks:
       default:
       smart-locker:

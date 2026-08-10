@@ -33,11 +33,23 @@ echo "==> (re)starting the panel on the shared network"
 cd "$PANEL_DIR"
 docker compose up -d --build
 
-echo "==> checking DNS from inside nginx"
-if ! docker exec "$NGINX_CT" sh -c "wget -qO- --timeout=5 http://247panel:3000/login >/dev/null"; then
+echo "==> waiting for nginx to reach http://247panel:3000"
+# Next takes a second or two to bind; a bare check right after `up` races it.
+reachable=
+for i in $(seq 1 30); do
+  if docker exec "$NGINX_CT" sh -c "wget -qO- --timeout=3 http://247panel:3000/login >/dev/null" 2>/dev/null; then
+    reachable=1; echo "    up after ${i}s"; break
+  fi
+  sleep 1
+done
+if [[ -z $reachable ]]; then
   echo "!! nginx cannot reach http://247panel:3000"
   echo "   networks on the panel container:"
   docker inspect 247panel --format '{{range $k,$v := .NetworkSettings.Networks}}     {{$k}}{{println}}{{end}}'
+  echo "   listen address (must be 0.0.0.0, not 127.0.0.1 or the container name):"
+  docker exec 247panel sh -c 'printenv HOSTNAME PORT' || true
+  echo "   panel logs:"
+  docker logs --tail 20 247panel
   exit 1
 fi
 
