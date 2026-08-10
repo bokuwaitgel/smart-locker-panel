@@ -1,0 +1,28 @@
+# /etc/systemd/system/247panel.service
+# Alternative to pm2. Adjust User, WorkingDirectory and the node/npm path.
+#
+# Install:
+#   sudo cp deploy/247panel.service /etc/systemd/system/247panel.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now 247panel
+#   sudo systemctl status 247panel
+
+[Unit]
+Description=247 Smart Locker Panel (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/247panel
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

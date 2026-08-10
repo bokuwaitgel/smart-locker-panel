@@ -1,0 +1,16 @@
+services:
+  panel:
+    build:
+      context: .
+      args:
+        # Build-time only. Change this -> rebuild (`docker compose up -d --build`);
+        # restarting the container will not pick up a new value.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://247box.ekzomap.mn}
+    image: 247panel:latest
+    container_name: 247panel
+    restart: unless-stopped
+    # Bound to loopback — nginx on the host terminates TLS and proxies here.
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NODE_ENV: production
